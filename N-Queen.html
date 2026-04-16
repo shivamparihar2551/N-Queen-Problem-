@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N-Queens Problem Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9em;
+        }
+
+        .control-group input,
+        .control-group select,
+        .control-group button {
+            padding: 10px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        .control-group input:focus,
+        .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1em;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+
+        .board-section {
+            flex: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: white;
+        }
+
+        .stats {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .chessboard {
+            display: grid;
+            gap: 2px;
+            background: #333;
+            padding: 2px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .cell.white {
+            background: #f0d9b5;
+        }
+
+        .cell.black {
+            background: #b58863;
+        }
+
+        .cell.placing {
+            animation: pulse 0.5s;
+        }
+
+        .cell.backtrack {
+            animation: fadeOut 0.3s;
+        }
+
+        .cell.conflict {
+            background: #ff6b6b !important;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+
+        .queen {
+            font-size: 0.8em;
+            animation: queenAppear 0.4s;
+        }
+
+        @keyframes queenAppear {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        .code-section {
+            width: 450px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 30px;
+            overflow-y: auto;
+            border-left: 2px solid #e9ecef;
+        }
+
+        .code-section h3 {
+            color: #4ec9b0;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        .code-section pre {
+            margin: 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.85em;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .code-section code {
+            color: #ce9178;
+        }
+
+        .keyword { color: #569cd6; }
+        .function { color: #dcdcaa; }
+        .string { color: #ce9178; }
+        .comment { color: #6a9955; }
+        .number { color: #b5cea8; }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.1em;
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .status.running {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 2px solid #bee5eb;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .code-section {
+                width: 100%;
+                max-height: 400px;
+                border-left: none;
+                border-top: 2px solid #e9ecef;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .controls {
+                padding: 20px;
+            }
+
+            .board-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>♛ N-Queens Problem Visualizer</h1>
+            <p>Watch different algorithms solve the classic N-Queens puzzle</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="boardSize">Board Size (N)</label>
+                <input type="number" id="boardSize" min="4" max="12" value="8">
+            </div>
+
+            <div class="control-group">
+                <label for="algorithm">Algorithm</label>
+                <select id="algorithm">
+                    <option value="dfs">DFS (Backtracking)</option>
+                    <option value="bfs">BFS</option>
+                    <option value="greedy">Greedy</option>
+                    <option value="astar">A* Search</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="speed">Animation Speed</label>
+                <input type="range" id="speed" min="1" max="100" value="50">
+            </div>
+
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button id="startBtn">Start</button>
+            </div>
+
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button id="resetBtn" class="reset-btn">Reset</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="board-section">
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Steps</div>
+                        <div class="stat-value" id="steps">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Nodes Explored</div>
+                        <div class="stat-value" id="nodes">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Board Size</div>
+                        <div class="stat-value" id="size">8</div>
+                    </div>
+                </div>
+                <div id="chessboard" class="chessboard"></div>
+                <div id="status"></div>
+            </div>
+
+            <div class="code-section">
+                <h3 id="codeTitle">Algorithm Code</h3>
+                <pre id="codeDisplay"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class NQueensVisualizer {
+            constructor() {
+                this.n = 8;
+                this.board = [];
+                this.queens = [];
+                this.isRunning = false;
+                this.steps = 0;
+                this.nodes = 0;
+                this.speed = 50;
+                this.currentAlgorithm = 'dfs';
+                
+                this.initializeElements();
+                this.attachEventListeners();
+                this.createBoard();
+                this.updateCodeDisplay();
+            }
+
+            initializeElements() {
+                this.boardElement = document.getElementById('chessboard');
+                this.startBtn = document.getElementById('startBtn');
+                this.resetBtn = document.getElementById('resetBtn');
+                this.boardSizeInput = document.getElementById('boardSize');
+                this.algorithmSelect = document.getElementById('algorithm');
+                this.speedSlider = document.getElementById('speed');
+                this.stepsDisplay = document.getElementById('steps');
+                this.nodesDisplay = document.getElementById('nodes');
+                this.sizeDisplay = document.getElementById('size');
+                this.statusDisplay = document.getElementById('status');
+                this.codeDisplay = document.getElementById('codeDisplay');
+                this.codeTitle = document.getElementById('codeTitle');
+            }
+
+            attachEventListeners() {
+                this.startBtn.addEventListener('click', () => this.start());
+                this.resetBtn.addEventListener('click', () => this.reset());
+                this.boardSizeInput.addEventListener('change', (e) => {
+                    this.n = parseInt(e.target.value);
+                    this.reset();
+                });
+                this.algorithmSelect.addEventListener('change', (e) => {
+                    this.currentAlgorithm = e.target.value;
+                    this.updateCodeDisplay();
+                });
+                this.speedSlider.addEventListener('input', (e) => {
+                    this.speed = parseInt(e.target.value);
+                });
+            }
+
+            createBoard() {
+                this.boardElement.innerHTML = '';
+                this.boardElement.style.gridTemplateColumns = `repeat(${this.n}, 1fr)`;
+                const cellSize = Math.min(500 / this.n, 60);
+                this.boardElement.style.width = `${cellSize * this.n}px`;
+                
+                this.board = Array(this.n).fill().map(() => Array(this.n).fill(0));
+                this.queens = [];
+
+                for (let row = 0; row < this.n; row++) {
+                    for (let col = 0; col < this.n; col++) {
+                        const cell = document.createElement('div');
+                        cell.className = `cell ${(row + col) % 2 === 0 ? 'white' : 'black'}`;
+                        cell.dataset.row = row;
+                        cell.dataset.col = col;
+                        this.boardElement.appendChild(cell);
+                    }
+                }
+
+                this.sizeDisplay.textContent = this.n;
+            }
+
+            async sleep(ms) {
+                const delay = 1000 - (this.speed * 9);
+                return new Promise(resolve => setTimeout(resolve, delay));
+            }
+
+            async placeQueen(row, col, isBacktrack = false) {
+                this.steps++;
+                this.stepsDisplay.textContent = this.steps;
+
+                const cell = this.boardElement.children[row * this.n + col];
+                
+                if (isBacktrack) {
+                    cell.classList.add('backtrack');
+                    await this.sleep(50);
+                    cell.innerHTML = '';
+                    cell.classList.remove('backtrack');
+                    this.board[row][col] = 0;
+                    this.queens = this.queens.filter(q => !(q.row === row && q.col === col));
+                } else {
+                    cell.classList.add('placing');
+                    await this.sleep(50);
+                    cell.innerHTML = '<span class="queen">♛</span>';
+                    this.board[row][col] = 1;
+                    this.queens.push({row, col});
+                }
+            }
+
+            isSafe(row, col) {
+                for (let q of this.queens) {
+                    if (q.col === col || q.row === row) return false;
+                    if (Math.abs(q.row - row) === Math.abs(q.col - col)) return false;
+                }
+                return true;
+            }
+
+            countConflicts(board) {
+                let conflicts = 0;
+                const queens = [];
+                
+                for (let row = 0; row < this.n; row++) {
+                    for (let col = 0; col < this.n; col++) {
+                        if (board[row][col] === 1) {
+                            queens.push({row, col});
+                        }
+                    }
+                }
+
+                for (let i = 0; i < queens.length; i++) {
+                    for (let j = i + 1; j < queens.length; j++) {
+                        const q1 = queens[i];
+                        const q2 = queens[j];
+                        if (q1.row === q2.row || q1.col === q2.col) conflicts++;
+                        if (Math.abs(q1.row - q2.row) === Math.abs(q1.col - q2.col)) conflicts++;
+                    }
+                }
+                return conflicts;
+            }
+
+            async solveDFS(row = 0) {
+                this.nodes++;
+                this.nodesDisplay.textContent = this.nodes;
+
+                if (!this.isRunning) return false;
+
+                if (row === this.n) {
+                    return true;
+                }
+
+                for (let col = 0; col < this.n; col++) {
+                    if (this.isSafe(row, col)) {
+                        await this.placeQueen(row, col);
+
+                        if (await this.solveDFS(row + 1)) {
+                            return true;
+                        }
+
+                        await this.placeQueen(row, col, true);
+                    }
+                }
+
+                return false;
+            }
+
+            async solveBFS() {
+                const queue = [{board: Array(this.n).fill().map(() => Array(this.n).fill(0)), row: 0, queens: []}];
+                
+                while (queue.length > 0 && this.isRunning) {
+                    const {board: currentBoard, row, queens: currentQueens} = queue.shift();
+                    this.nodes++;
+                    this.nodesDisplay.textContent = this.nodes;
+
+                    if (row === this.n) {
+                        for (let q of currentQueens) {
+                            await this.placeQueen(q.row, q.col);
+                        }
+                        return true;
+                    }
+
+                    for (let col = 0; col < this.n; col++) {
+                        let safe = true;
+                        for (let q of currentQueens) {
+                            if (q.col === col || Math.abs(q.row - row) === Math.abs(q.col - col)) {
+                                safe = false;
+                                break;
+                            }
+                        }
+
+                        if (safe) {
+                            const newBoard = currentBoard.map(r => [...r]);
+                            newBoard[row][col] = 1;
+                            const newQueens = [...currentQueens, {row, col}];
+                            queue.push({board: newBoard, row: row + 1, queens: newQueens});
+                        }
+                    }
+                }
+
+                return false;
+            }
+
+            async solveGreedy() {
+                for (let row = 0; row < this.n && this.isRunning; row++) {
+                    this.nodes++;
+                    this.nodesDisplay.textContent = this.nodes;
+
+                    let bestCol = -1;
+                    let minConflicts = Infinity;
+
+                    for (let col = 0; col < this.n; col++) {
+                        if (this.isSafe(row, col)) {
+                            this.queens.push({row, col});
+                            const conflicts = this.countConflicts(this.board);
+                            this.queens.pop();
+
+                            if (conflicts < minConflicts) {
+                                minConflicts = conflicts;
+                                bestCol = col;
+                            }
+                        }
+                    }
+
+                    if (bestCol !== -1) {
+                        await this.placeQueen(row, bestCol);
+                    } else {
+                        return false;
+                    }
+                }
+
+                return this.queens.length === this.n;
+            }
+
+            async solveAStar() {
+                const openSet = [{
+                    board: Array(this.n).fill().map(() => Array(this.n).fill(0)),
+                    queens: [],
+                    g: 0,
+                    h: this.n,
+                    f: this.n,
+                    row: 0
+                }];
+
+                while (openSet.length > 0 && this.isRunning) {
+                    openSet.sort((a, b) => a.f - b.f);
+                    const current = openSet.shift();
+                    
+                    this.nodes++;
+                    this.nodesDisplay.textContent = this.nodes;
+
+                    if (current.row === this.n) {
+                        for (let q of current.queens) {
+                            await this.placeQueen(q.row, q.col);
+                        }
+                        return true;
+                    }
+
+                    for (let col = 0; col < this.n; col++) {
+                        let safe = true;
+                        for (let q of current.queens) {
+                            if (q.col === col || Math.abs(q.row - current.row) === Math.abs(q.col - col)) {
+                                safe = false;
+                                break;
+                            }
+                        }
+
+                        if (safe) {
+                            const newBoard = current.board.map(r => [...r]);
+                            newBoard[current.row][col] = 1;
+                            const newQueens = [...current.queens, {row: current.row, col}];
+                            
+                            const g = current.g + 1;
+                            const h = this.n - newQueens.length;
+                            const f = g + h;
+
+                            openSet.push({
+                                board: newBoard,
+                                queens: newQueens,
+                                g, h, f,
+                                row: current.row + 1
+                            });
+                        }
+                    }
+                }
+
+                return false;
+            }
+
+            async start() {
+                if (this.isRunning) return;
+
+                this.reset();
+                this.isRunning = true;
+                this.startBtn.disabled = true;
+                
+                this.showStatus('Solving...', 'running');
+
+                let result = false;
+
+                try {
+                    switch (this.currentAlgorithm) {
+                        case 'dfs':
+                            result = await this.solveDFS();
+                            break;
+                        case 'bfs':
+                            result = await this.solveBFS();
+                            break;
+                        case 'greedy':
+                            result = await this.solveGreedy();
+                            break;
+                        case 'astar':
+                            result = await this.solveAStar();
+                            break;
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
+
+                this.isRunning = false;
+                this.startBtn.disabled = false;
+
+                if (result) {
+                    this.showStatus('Solution Found! ✓', 'success');
+                } else {
+                    this.showStatus('No Solution Found', 'error');
+                }
+            }
+
+            reset() {
+                this.isRunning = false;
+                this.steps = 0;
+                this.nodes = 0;
+                this.stepsDisplay.textContent = '0';
+                this.nodesDisplay.textContent = '0';
+                this.statusDisplay.innerHTML = '';
+                this.startBtn.disabled = false;
+                this.createBoard();
+            }
+
+            showStatus(message, type) {
+                this.statusDisplay.innerHTML = `<div class="status ${type}">${message}</div>`;
+            }
+
+            updateCodeDisplay() {
+                const codes = {
+                    dfs: `<span class="comment">// DFS Backtracking Algorithm</span>
+<span class="keyword">async function</span> <span class="function">solveDFS</span>(row = <span class="number">0</span>) {
+    <span class="keyword">if</span> (row === n) {
+        <span class="keyword">return true</span>; <span class="comment">// All queens placed</span>
+    }
+
+    <span class="keyword">for</span> (<span class="keyword">let</span> col = <span class="number">0</span>; col < n; col++) {
+        <span class="keyword">if</span> (<span class="function">isSafe</span>(row, col)) {
+            <span class="keyword">await</span> <span class="function">placeQueen</span>(row, col);
+
+            <span class="keyword">if</span> (<span class="keyword">await</span> <span class="function">solveDFS</span>(row + <span class="number">1</span>)) {
+                <span class="keyword">return true</span>;
+            }
+
+            <span class="comment">// Backtrack</span>
+            <span class="keyword">await</span> <span class="function">placeQueen</span>(row, col, <span class="keyword">true</span>);
+        }
+    }
+
+    <span class="keyword">return false</span>;
+}`,
+
+                    bfs: `<span class="comment">// BFS Algorithm using Queue</span>
+<span class="keyword">async function</span> <span class="function">solveBFS</span>() {
+    <span class="keyword">const</span> queue = [{
+        board: <span class="function">emptyBoard</span>(),
+        row: <span class="number">0</span>,
+        queens: []
+    }];
+
+    <span class="keyword">while</span> (queue.length > <span class="number">0</span>) {
+        <span class="keyword">const</span> {board, row, queens} = queue.<span class="function">shift</span>();
+
+        <span class="keyword">if</span> (row === n) {
+            <span class="comment">// Solution found</span>
+            <span class="keyword">for</span> (<span class="keyword">let</span> q <span class="keyword">of</span> queens) {
+                <span class="keyword">await</span> <span class="function">placeQueen</span>(q.row, q.col);
+            }
+            <span class="keyword">return true</span>;
+        }
+
+        <span class="keyword">for</span> (<span class="keyword">let</span> col = <span class="number">0</span>; col < n; col++) {
+            <span class="keyword">if</span> (<span class="function">isSafe</span>(row, col, queens)) {
+                <span class="keyword">const</span> newQueens = [...queens, {row, col}];
+                queue.<span class="function">push</span>({
+                    board: <span class="function">updateBoard</span>(board, row, col),
+                    row: row + <span class="number">1</span>,
+                    queens: newQueens
+                });
+            }
+        }
+    }
+
+    <span class="keyword">return false</span>;
+}`,
+
+                    greedy: `<span class="comment">// Greedy Algorithm</span>
+<span class="comment">// Places queen with minimum conflicts</span>
+<span class="keyword">async function</span> <span class="function">solveGreedy</span>() {
+    <span class="keyword">for</span> (<span class="keyword">let</span> row = <span class="number">0</span>; row < n; row++) {
+        <span class="keyword">let</span> bestCol = -<span class="number">1</span>;
+        <span class="keyword">let</span> minConflicts = <span class="number">Infinity</span>;
+
+        <span class="comment">// Find column with min conflicts</span>
+        <span class="keyword">for</span> (<span class="keyword">let</span> col = <span class="number">0</span>; col < n; col++) {
+            <span class="keyword">if</span> (<span class="function">isSafe</span>(row, col)) {
+                <span class="keyword">const</span> conflicts = <span class="function">countConflicts</span>(
+                    row, col
+                );
+
+                <span class="keyword">if</span> (conflicts < minConflicts) {
+                    minConflicts = conflicts;
+                    bestCol = col;
+                }
+            }
+        }
+
+        <span class="keyword">if</span> (bestCol !== -<span class="number">1</span>) {
+            <span class="keyword">await</span> <span class="function">placeQueen</span>(row, bestCol);
+        } <span class="keyword">else</span> {
+            <span class="keyword">return false</span>; <span class="comment">// No valid position</span>
+        }
+    }
+
+    <span class="keyword">return true</span>;
+}`,
+
+                    astar: `<span class="comment">// A* Search Algorithm</span>
+<span class="comment">// f(n) = g(n) + h(n)</span>
+<span class="comment">// g(n) = depth, h(n) = remaining queens</span>
+<span class="keyword">async function</span> <span class="function">solveAStar</span>() {
+    <span class="keyword">const</span> openSet = [{
+        queens: [],
+        g: <span class="number">0</span>,           <span class="comment">// Cost so far</span>
+        h: n,           <span class="comment">// Heuristic (remaining)</span>
+        f: n,           <span class="comment">// Total cost</span>
+        row: <span class="number">0</span>
+    }];
+
+    <span class="keyword">while</span> (openSet.length > <span class="number">0</span>) {
+        <span class="comment">// Sort by f(n) - lowest first</span>
+        openSet.<span class="function">sort</span>((a, b) => a.f - b.f);
+        <span class="keyword">const</span> current = openSet.<span class="function">shift</span>();
+
+        <span class="keyword">if</span> (current.row === n) {
+            <span class="comment">// Goal reached</span>
+            <span class="keyword">for</span> (<span class="keyword">let</span> q <span class="keyword">of</span> current.queens) {
+                <span class="keyword">await</span> <span class="function">placeQueen</span>(q.row, q.col);
+            }
+            <span class="keyword">return true</span>;
+        }
+
+        <span class="keyword">for</span> (<span class="keyword">let</span> col = <span class="number">0</span>; col < n; col++) {
+            <span class="keyword">if</span> (<span class="function">isSafe</span>(current.row, col, current.queens)) {
+                <span class="keyword">const</span> newQueens = [
+                    ...current.queens,
+                    {row: current.row, col}
+                ];
+                
+                <span class="keyword">const</span> g = current.g + <span class="number">1</span>;
+                <span class="keyword">const</span> h = n - newQueens.length;
+                
+                openSet.<span class="function">push</span>({
+                    queens: newQueens,
+                    g, h,
+                    f: g + h,
+                    row: current.row + <span class="number">1</span>
+                });
+            }
+        }
+    }
+
+    <span class="keyword">return false</span>;
+}`
+                };
+
+                this.codeDisplay.innerHTML = codes[this.currentAlgorithm];
+                const algoNames = {
+                    dfs: 'DFS (Backtracking)',
+                    bfs: 'BFS (Breadth-First Search)',
+                    greedy: 'Greedy Algorithm',
+                    astar: 'A* Search'
+                };
+                this.codeTitle.textContent = algoNames[this.currentAlgorithm] + ' - Code';
+            }
+        }
+
+        const visualizer = new NQueensVisualizer();
+    </script>
+</body>
+</html>
